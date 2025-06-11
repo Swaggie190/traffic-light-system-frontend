@@ -6,7 +6,7 @@ import {
   LayoutDashboard,
   Play,
   Settings,
-  Traffic,
+  Car,
   Wifi,
   WifiOff,
 } from "lucide-react";

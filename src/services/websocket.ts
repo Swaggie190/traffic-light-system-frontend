@@ -76,18 +76,33 @@ export class WebSocketService {
   }
 
   public connect() {
+    if (this.useMock) {
+      mockWebSocketService.connect();
+      return;
+    }
+
     if (this.client && !this.client.connected) {
       this.client.activate();
     }
   }
 
   public disconnect() {
+    if (this.useMock) {
+      mockWebSocketService.disconnect();
+      return;
+    }
+
     if (this.client && this.client.connected) {
       this.client.deactivate();
     }
   }
 
   public subscribeToSimulation(simulationId: string) {
+    if (this.useMock) {
+      mockWebSocketService.subscribeToSimulation(simulationId);
+      return;
+    }
+
     if (!this.client || !this.client.connected) {
       console.warn("WebSocket not connected, cannot subscribe");
       return;
@@ -124,6 +139,11 @@ export class WebSocketService {
   }
 
   public unsubscribeFromSimulation(simulationId: string) {
+    if (this.useMock) {
+      mockWebSocketService.unsubscribeFromSimulation(simulationId);
+      return;
+    }
+
     if (!this.client || !this.client.connected) {
       return;
     }

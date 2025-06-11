@@ -86,7 +86,7 @@ const Sidebar = () => {
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary rounded-lg">
-            <Traffic className="h-6 w-6 text-primary-foreground" />
+            <Car className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
             <h1 className="font-bold text-lg">Traffic Control</h1>

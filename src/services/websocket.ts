@@ -11,15 +11,24 @@ import {
   setConnectionStatus,
   updateSimulationStatus,
 } from "../store/slices/simulationSlice";
+import { mockWebSocketService } from "./mockWebSocket";
+
+const USE_MOCK_WEBSOCKET = true; // Set to false when backend WebSocket is available
 
 export class WebSocketService {
   private client: Client | null = null;
   private reconnectInterval: number = 5000;
-  private maxReconnectAttempts: number = 10;
+  private maxReconnectAttempts: number = 3; // Reduced for faster fallback
   private reconnectAttempts: number = 0;
+  private useMock: boolean = false;
 
   constructor() {
-    this.initializeClient();
+    if (USE_MOCK_WEBSOCKET) {
+      this.useMock = true;
+      console.log("Using mock WebSocket service");
+    } else {
+      this.initializeClient();
+    }
   }
 
   private initializeClient() {

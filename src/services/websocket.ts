@@ -170,6 +170,9 @@ export class WebSocketService {
   }
 
   public isConnected(): boolean {
+    if (this.useMock) {
+      return mockWebSocketService.isConnected();
+    }
     return this.client?.connected || false;
   }
 }

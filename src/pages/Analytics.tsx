@@ -10,7 +10,7 @@ import {
   BarChart3,
   TrendingUp,
   Download,
-  CompareIcon,
+  GitCompare,
   Activity,
   Clock,
   Target,

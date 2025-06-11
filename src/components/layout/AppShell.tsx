@@ -74,7 +74,7 @@ const Sidebar = () => {
   const currentPath = location.pathname;
 
   const navigation = [
-    { to: "/", icon: Dashboard, label: "Dashboard" },
+    { to: "/", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/simulation", icon: Play, label: "Simulation" },
     { to: "/scenarios", icon: Settings, label: "Scenarios" },
     { to: "/analytics", icon: BarChart3, label: "Analytics" },

@@ -13,8 +13,17 @@ import {
   ApiResponse,
   SimulationConfigResponse,
 } from "../types/simulation";
+import {
+  mockDashboardSummary,
+  mockSimulationStatus,
+  mockPerformanceMetrics,
+  mockScenarioTemplates,
+  generateMockTrafficLights,
+  generateMockTrafficState,
+} from "./mockData";
 
 const BASE_URL = "http://localhost:8080/api";
+const USE_MOCK_DATA = true; // Set to false when backend is available
 
 class APIService {
   private async request<T>(
@@ -43,7 +52,53 @@ class APIService {
       return data;
     } catch (error) {
       console.error(`API request failed: ${endpoint}`, error);
+
+      // If backend is not available, return mock data for demo purposes
+      if (USE_MOCK_DATA) {
+        console.warn(`Using mock data for ${endpoint}`);
+        return this.getMockResponse<T>(endpoint);
+      }
+
       throw error;
+    }
+  }
+
+  private getMockResponse<T>(endpoint: string): ApiResponse<T> {
+    const mockData = this.getMockDataForEndpoint(endpoint);
+    return {
+      success: true,
+      data: mockData as T,
+      message: "Mock data - backend not available",
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  private getMockDataForEndpoint(endpoint: string): any {
+    switch (endpoint) {
+      case "/dashboard/summary":
+        return mockDashboardSummary;
+      case "/scenarios":
+        return mockScenarioTemplates;
+      default:
+        if (endpoint.includes("/status")) {
+          return mockSimulationStatus;
+        }
+        if (endpoint.includes("/metrics")) {
+          return mockPerformanceMetrics;
+        }
+        if (endpoint.includes("/trafficlight")) {
+          return generateMockTrafficLights();
+        }
+        if (endpoint.includes("/states")) {
+          return [generateMockTrafficState()];
+        }
+        if (
+          endpoint.includes("/simulations") &&
+          endpoint.endsWith("/simulations")
+        ) {
+          return [mockDashboardSummary.mostRecentSimulation];
+        }
+        return null;
     }
   }
 

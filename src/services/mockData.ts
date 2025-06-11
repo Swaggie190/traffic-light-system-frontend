@@ -1,0 +1,260 @@
+import {
+  DashboardSummary,
+  SimulationStatusResponse,
+  TrafficStateResponse,
+  TrafficLightStatus,
+  PerformanceMetricsResponse,
+  ScenarioTemplate,
+  SensorStatusResponse,
+  SimulationConfigResponse,
+  QuickStats,
+} from "../types/simulation";
+
+// Mock Dashboard Data
+export const mockDashboardSummary: DashboardSummary = {
+  totalSimulations: 47,
+  activeSimulations: 3,
+  completedSimulations: 42,
+  averagePerformanceIndex: 4.2,
+  bestPerformingScenario: "BALANCED",
+  mostRecentSimulation: {
+    simulationId: "sim-12345",
+    name: "Rush Hour Analysis",
+    scenario: "RUSH_HOUR",
+    lambdaNorth: 4.5,
+    lambdaSouth: 4.2,
+    lambdaEast: 3.8,
+    lambdaWest: 3.9,
+    muNorth: 1.5,
+    muSouth: 1.3,
+    muEast: 1.2,
+    muWest: 1.4,
+    sigmaNorth: 3.2,
+    sigmaSouth: 3.1,
+    sigmaEast: 2.9,
+    sigmaWest: 3.0,
+    minGreenTime: 15,
+    maxGreenTime: 45,
+    yellowTime: 3,
+    redClearanceTime: 2,
+    pedestrianWeight: 0.3,
+    switchingThreshold: 2.0,
+    vehiclePerformanceWeight: 0.7,
+    pedestrianPerformanceWeight: 0.3,
+    createdAt: new Date().toISOString(),
+    status: "COMPLETED",
+  },
+  recentPerformance: [
+    {
+      simulationId: "sim-12345",
+      performanceIndex: 4.7,
+      completedAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      simulationId: "sim-12344",
+      performanceIndex: 4.2,
+      completedAt: new Date(Date.now() - 7200000).toISOString(),
+    },
+    {
+      simulationId: "sim-12343",
+      performanceIndex: 3.9,
+      completedAt: new Date(Date.now() - 10800000).toISOString(),
+    },
+    {
+      simulationId: "sim-12342",
+      performanceIndex: 4.5,
+      completedAt: new Date(Date.now() - 14400000).toISOString(),
+    },
+    {
+      simulationId: "sim-12341",
+      performanceIndex: 3.8,
+      completedAt: new Date(Date.now() - 18000000).toISOString(),
+    },
+  ],
+  lastUpdate: new Date().toISOString(),
+};
+
+// Mock Traffic State
+export const mockTrafficState: TrafficStateResponse = {
+  timeStep: 1250,
+  timestamp: new Date().toISOString(),
+  vehiclesNorth: 8,
+  vehiclesSouth: 12,
+  vehiclesEast: 6,
+  vehiclesWest: 9,
+  pedestriansNorth: 3,
+  pedestriansSouth: 5,
+  pedestriansEast: 2,
+  pedestriansWest: 4,
+  currentPhase: "PHASE_1",
+  currentGreenTime: 28,
+  calculatedGreenTime: 35,
+  phase1Density: 0.65,
+  phase2Density: 0.42,
+};
+
+// Mock Traffic Light Status
+export const mockTrafficLightStatus: TrafficLightStatus = {
+  simulationId: "sim-12345",
+  timeStep: 1250,
+  timestamp: new Date().toISOString(),
+  northSouth: {
+    color: "GREEN",
+    duration: 28,
+    pedestrianCrossing: false,
+  },
+  eastWest: {
+    color: "RED",
+    duration: 28,
+    pedestrianCrossing: false,
+  },
+  currentGreenTime: 28,
+  remainingGreenTime: 7,
+  nextPhaseCountdown: 7,
+  northSouthDensity: 0.65,
+  eastWestDensity: 0.42,
+};
+
+// Mock Simulation Status
+export const mockSimulationStatus: SimulationStatusResponse = {
+  simulationId: "sim-12345",
+  status: "RUNNING",
+  currentTimeStep: 1250,
+  totalTimeSteps: 3000,
+  progress: 41.7,
+  currentState: mockTrafficState,
+  message: "Simulation running normally",
+  lastUpdate: new Date().toISOString(),
+};
+
+// Mock Performance Metrics
+export const mockPerformanceMetrics: PerformanceMetricsResponse = {
+  simulationId: "sim-12345",
+  totalTimeSteps: 3000,
+  averageVehicleWaitingTime: 23.5,
+  averagePedestrianWaitingTime: 18.2,
+  combinedPerformanceIndex: 4.2,
+  totalVehiclesProcessed: 1247,
+  totalPedestriansProcessed: 543,
+  phase1TotalTime: 1850,
+  phase2TotalTime: 1150,
+  calculatedAt: new Date().toISOString(),
+};
+
+// Mock Scenario Templates
+export const mockScenarioTemplates: ScenarioTemplate[] = [
+  {
+    name: "Balanced Traffic",
+    description:
+      "Standard traffic flow with equal distribution in all directions",
+    scenario: "BALANCED",
+    lambdaNorth: 2.0,
+    lambdaSouth: 2.0,
+    lambdaEast: 2.0,
+    lambdaWest: 2.0,
+    muNorth: 1.0,
+    muSouth: 1.0,
+    muEast: 1.0,
+    muWest: 1.0,
+    sigmaNorth: 3.0,
+    sigmaSouth: 3.0,
+    sigmaEast: 3.0,
+    sigmaWest: 3.0,
+    minGreenTime: 10,
+    maxGreenTime: 60,
+    yellowTime: 3,
+    redClearanceTime: 2,
+    pedestrianWeight: 0.3,
+    switchingThreshold: 2.0,
+    vehiclePerformanceWeight: 0.7,
+    pedestrianPerformanceWeight: 0.3,
+  },
+  {
+    name: "Heavy North-South",
+    description: "Increased traffic flow on North-South corridor",
+    scenario: "HEAVY_NS",
+    lambdaNorth: 4.0,
+    lambdaSouth: 4.0,
+    lambdaEast: 2.0,
+    lambdaWest: 2.0,
+    muNorth: 1.5,
+    muSouth: 1.5,
+    muEast: 1.0,
+    muWest: 1.0,
+    sigmaNorth: 4.0,
+    sigmaSouth: 4.0,
+    sigmaEast: 3.0,
+    sigmaWest: 3.0,
+    minGreenTime: 15,
+    maxGreenTime: 80,
+    yellowTime: 3,
+    redClearanceTime: 2,
+    pedestrianWeight: 0.2,
+    switchingThreshold: 2.5,
+    vehiclePerformanceWeight: 0.8,
+    pedestrianPerformanceWeight: 0.2,
+  },
+  {
+    name: "Rush Hour",
+    description: "Peak traffic conditions with high density in all directions",
+    scenario: "RUSH_HOUR",
+    lambdaNorth: 6.0,
+    lambdaSouth: 6.0,
+    lambdaEast: 5.0,
+    lambdaWest: 5.0,
+    muNorth: 2.0,
+    muSouth: 2.0,
+    muEast: 1.8,
+    muWest: 1.8,
+    sigmaNorth: 5.0,
+    sigmaSouth: 5.0,
+    sigmaEast: 4.5,
+    sigmaWest: 4.5,
+    minGreenTime: 20,
+    maxGreenTime: 90,
+    yellowTime: 4,
+    redClearanceTime: 3,
+    pedestrianWeight: 0.15,
+    switchingThreshold: 3.0,
+    vehiclePerformanceWeight: 0.85,
+    pedestrianPerformanceWeight: 0.15,
+  },
+];
+
+// Helper function to generate realistic mock data
+export const generateMockTrafficState = (): TrafficStateResponse => ({
+  ...mockTrafficState,
+  timeStep: mockTrafficState.timeStep + Math.floor(Math.random() * 10),
+  timestamp: new Date().toISOString(),
+  vehiclesNorth: Math.floor(Math.random() * 15) + 2,
+  vehiclesSouth: Math.floor(Math.random() * 15) + 2,
+  vehiclesEast: Math.floor(Math.random() * 12) + 1,
+  vehiclesWest: Math.floor(Math.random() * 12) + 1,
+  pedestriansNorth: Math.floor(Math.random() * 8),
+  pedestriansSouth: Math.floor(Math.random() * 8),
+  pedestriansEast: Math.floor(Math.random() * 6),
+  pedestriansWest: Math.floor(Math.random() * 6),
+  currentGreenTime: Math.floor(Math.random() * 60) + 5,
+  phase1Density: Math.random() * 0.8 + 0.2,
+  phase2Density: Math.random() * 0.8 + 0.2,
+});
+
+export const generateMockTrafficLights = (): TrafficLightStatus => {
+  const isPhase1Green = Math.random() > 0.5;
+  return {
+    ...mockTrafficLightStatus,
+    timestamp: new Date().toISOString(),
+    northSouth: {
+      color: isPhase1Green ? "GREEN" : "RED",
+      duration: Math.floor(Math.random() * 40) + 10,
+      pedestrianCrossing: Math.random() > 0.7,
+    },
+    eastWest: {
+      color: isPhase1Green ? "RED" : "GREEN",
+      duration: Math.floor(Math.random() * 40) + 10,
+      pedestrianCrossing: Math.random() > 0.7,
+    },
+    remainingGreenTime: Math.floor(Math.random() * 30) + 5,
+    nextPhaseCountdown: Math.floor(Math.random() * 35) + 5,
+  };
+};

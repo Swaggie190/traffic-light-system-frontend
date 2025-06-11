@@ -1,9 +1,37 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, Suspense, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Text, Box, Cylinder, Sphere } from "@react-three/drei";
 import * as THREE from "three";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
+
+// Safe Text Component with React 18 compatibility
+interface SafeTextProps {
+  position: [number, number, number];
+  fontSize: number;
+  color: string;
+  anchorX: "center" | "left" | "right";
+  anchorY: "middle" | "top" | "bottom";
+  rotation?: [number, number, number];
+  children: React.ReactNode;
+}
+
+const SafeText: React.FC<SafeTextProps> = ({ children, ...props }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    console.warn('Text component failed, rendering fallback');
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <Text {...props}>
+        {children}
+      </Text>
+    </Suspense>
+  );
+};
 
 // Traffic Light Component
 const TrafficLight = ({
@@ -110,67 +138,102 @@ const TrafficLight = ({
   );
 };
 
-// Vehicle Component
-const Vehicle = ({
-  position,
+// Animated Vehicle Component with SLOW movement
+const AnimatedVehicle = ({
+  startPosition,
+  endPosition,
   rotation,
   type = "car",
+  delay = 0,
 }: {
-  position: [number, number, number];
+  startPosition: [number, number, number];
+  endPosition: [number, number, number];
   rotation: [number, number, number];
   type?: "car" | "truck" | "bus";
+  delay?: number;
 }) => {
   const ref = useRef<THREE.Group>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  // VERY SLOW movement - takes 20 seconds to travel from start to end
+  const MOVEMENT_DURATION = 20; // seconds
+  const SPEED = 0.05; // Very slow speed multiplier
+
+  useFrame((state, delta) => {
+    if (ref.current) {
+      setCurrentTime((prev) => prev + delta);
+      
+      // Apply delay before starting movement
+      const adjustedTime = Math.max(0, currentTime - delay);
+      
+      // Calculate progress (0 to 1) over the duration
+      const progress = Math.min(adjustedTime / MOVEMENT_DURATION, 1);
+      
+      // Linear interpolation between start and end positions
+      const x = startPosition[0] + (endPosition[0] - startPosition[0]) * progress;
+      const y = startPosition[1] + (endPosition[1] - startPosition[1]) * progress;
+      const z = startPosition[2] + (endPosition[2] - startPosition[2]) * progress;
+      
+      ref.current.position.set(x, y, z);
+      
+      // Reset position when reaching the end (loop the animation)
+      if (progress >= 1) {
+        setCurrentTime(-delay); // Restart with delay
+      }
+    }
+  });
 
   const { color, size } = useMemo(() => {
     switch (type) {
       case "truck":
         return {
-          color: "#1f2937",
-          size: [2.5, 1.8, 1.2] as [number, number, number],
+          color: "#1f2937", // Black/Dark Gray
+          size: [1.2, 0.8, 0.6] as [number, number, number], // Reduced by ~50%
         };
       case "bus":
         return {
-          color: "#fbbf24",
-          size: [3.5, 2.2, 1.5] as [number, number, number],
+          color: "#fbbf24", // Yellow
+          size: [1.6, 1.0, 0.8] as [number, number, number], // Reduced by ~55%
         };
       default:
         return {
-          color: "#3b82f6",
-          size: [2, 1.4, 1] as [number, number, number],
+          color: "#3b82f6", // Blue
+          size: [1.0, 0.7, 0.5] as [number, number, number], // Reduced by ~50%
         };
     }
   }, [type]);
 
   return (
-    <group ref={ref} position={position} rotation={rotation}>
+    <group ref={ref} position={startPosition} rotation={rotation}>
+      {/* Main vehicle body */}
       <Box args={size}>
         <meshStandardMaterial color={color} />
       </Box>
-      {/* Wheels */}
+      
+      {/* Vehicle wheels (4 smaller dark gray cylinders) */}
       <Cylinder
-        args={[0.3, 0.3, 0.2]}
+        args={[0.15, 0.15, 0.1]}
         position={[size[0] * 0.3, -size[1] * 0.5, size[2] * 0.4]}
         rotation={[0, 0, Math.PI / 2]}
       >
         <meshStandardMaterial color="#1f2937" />
       </Cylinder>
       <Cylinder
-        args={[0.3, 0.3, 0.2]}
+        args={[0.15, 0.15, 0.1]}
         position={[-size[0] * 0.3, -size[1] * 0.5, size[2] * 0.4]}
         rotation={[0, 0, Math.PI / 2]}
       >
         <meshStandardMaterial color="#1f2937" />
       </Cylinder>
       <Cylinder
-        args={[0.3, 0.3, 0.2]}
+        args={[0.15, 0.15, 0.1]}
         position={[size[0] * 0.3, -size[1] * 0.5, -size[2] * 0.4]}
         rotation={[0, 0, Math.PI / 2]}
       >
         <meshStandardMaterial color="#1f2937" />
       </Cylinder>
       <Cylinder
-        args={[0.3, 0.3, 0.2]}
+        args={[0.15, 0.15, 0.1]}
         position={[-size[0] * 0.3, -size[1] * 0.5, -size[2] * 0.4]}
         rotation={[0, 0, Math.PI / 2]}
       >
@@ -183,12 +246,12 @@ const Vehicle = ({
 // Road Component
 const Road = () => (
   <group>
-    {/* North-South Road */}
+    {/* North-South Road (vertical) */}
     <Box args={[4, 0.1, 40]} position={[0, 0, 0]}>
       <meshStandardMaterial color="#374151" />
     </Box>
 
-    {/* East-West Road */}
+    {/* East-West Road (horizontal) */}
     <Box args={[40, 0.1, 4]} position={[0, 0, 0]}>
       <meshStandardMaterial color="#374151" />
     </Box>
@@ -224,55 +287,99 @@ const Road = () => (
   </group>
 );
 
-// Animated Vehicles based on traffic state
-const AnimatedVehicles = () => {
+// Slow Animated Vehicles with continuous movement
+const SlowAnimatedVehicles = () => {
   const trafficState = useSelector(
     (state: RootState) => state.simulation.currentSimulation?.currentState,
   );
 
   const vehicles = useMemo(() => {
-    if (!trafficState) return [];
+    if (!trafficState) {
+      // Demo vehicles if no traffic state
+      return [
+        {
+          id: "demo-north-1",
+          startPosition: [1, 0.5, 15] as [number, number, number],
+          endPosition: [1, 0.5, -15] as [number, number, number],
+          rotation: [0, 0, 0] as [number, number, number],
+          type: "car" as const,
+          delay: 0,
+        },
+        {
+          id: "demo-south-1", 
+          startPosition: [-1, 0.5, -15] as [number, number, number],
+          endPosition: [-1, 0.5, 15] as [number, number, number],
+          rotation: [0, Math.PI, 0] as [number, number, number],
+          type: "truck" as const,
+          delay: 3,
+        },
+        {
+          id: "demo-east-1",
+          startPosition: [15, 0.5, 1] as [number, number, number],
+          endPosition: [-15, 0.5, 1] as [number, number, number],
+          rotation: [0, -Math.PI / 2, 0] as [number, number, number],
+          type: "bus" as const,
+          delay: 6,
+        },
+        {
+          id: "demo-west-1",
+          startPosition: [-15, 0.5, -1] as [number, number, number],
+          endPosition: [15, 0.5, -1] as [number, number, number],
+          rotation: [0, Math.PI / 2, 0] as [number, number, number],
+          type: "car" as const,
+          delay: 9,
+        },
+      ];
+    }
 
     const vehicleList = [];
     const vehicleTypes = ["car", "truck", "bus"] as const;
 
-    // North vehicles
-    for (let i = 0; i < Math.min(trafficState.vehiclesNorth, 10); i++) {
+    // North vehicles (moving south)
+    for (let i = 0; i < Math.min(trafficState.vehiclesNorth, 5); i++) {
       vehicleList.push({
         id: `north-${i}`,
-        position: [1, 0.5, 8 + i * 3] as [number, number, number],
+        startPosition: [1, 0.5, 15 + i * 5] as [number, number, number],
+        endPosition: [1, 0.5, -15] as [number, number, number],
         rotation: [0, 0, 0] as [number, number, number],
         type: vehicleTypes[Math.floor(Math.random() * vehicleTypes.length)],
+        delay: i * 4, // 4 second delay between vehicles
       });
     }
 
-    // South vehicles
-    for (let i = 0; i < Math.min(trafficState.vehiclesSouth, 10); i++) {
+    // South vehicles (moving north)
+    for (let i = 0; i < Math.min(trafficState.vehiclesSouth, 5); i++) {
       vehicleList.push({
         id: `south-${i}`,
-        position: [-1, 0.5, -8 - i * 3] as [number, number, number],
+        startPosition: [-1, 0.5, -15 - i * 5] as [number, number, number],
+        endPosition: [-1, 0.5, 15] as [number, number, number],
         rotation: [0, Math.PI, 0] as [number, number, number],
         type: vehicleTypes[Math.floor(Math.random() * vehicleTypes.length)],
+        delay: i * 4,
       });
     }
 
-    // East vehicles
-    for (let i = 0; i < Math.min(trafficState.vehiclesEast, 10); i++) {
+    // East vehicles (moving west)
+    for (let i = 0; i < Math.min(trafficState.vehiclesEast, 5); i++) {
       vehicleList.push({
         id: `east-${i}`,
-        position: [8 + i * 3, 0.5, 1] as [number, number, number],
+        startPosition: [15 + i * 5, 0.5, 1] as [number, number, number],
+        endPosition: [-15, 0.5, 1] as [number, number, number],
         rotation: [0, -Math.PI / 2, 0] as [number, number, number],
         type: vehicleTypes[Math.floor(Math.random() * vehicleTypes.length)],
+        delay: i * 4,
       });
     }
 
-    // West vehicles
-    for (let i = 0; i < Math.min(trafficState.vehiclesWest, 10); i++) {
+    // West vehicles (moving east)
+    for (let i = 0; i < Math.min(trafficState.vehiclesWest, 5); i++) {
       vehicleList.push({
         id: `west-${i}`,
-        position: [-8 - i * 3, 0.5, -1] as [number, number, number],
+        startPosition: [-15 - i * 5, 0.5, -1] as [number, number, number],
+        endPosition: [15, 0.5, -1] as [number, number, number],
         rotation: [0, Math.PI / 2, 0] as [number, number, number],
         type: vehicleTypes[Math.floor(Math.random() * vehicleTypes.length)],
+        delay: i * 4,
       });
     }
 
@@ -282,11 +389,13 @@ const AnimatedVehicles = () => {
   return (
     <>
       {vehicles.map((vehicle) => (
-        <Vehicle
+        <AnimatedVehicle
           key={vehicle.id}
-          position={vehicle.position}
+          startPosition={vehicle.startPosition}
+          endPosition={vehicle.endPosition}
           rotation={vehicle.rotation}
           type={vehicle.type}
+          delay={vehicle.delay}
         />
       ))}
     </>
@@ -303,87 +412,89 @@ export const TrafficVisualization = () => {
 
   return (
     <div className="w-full h-[600px] bg-gradient-to-b from-sky-200 to-sky-100 rounded-lg overflow-hidden">
-      <Canvas
-        camera={{
-          position: [25, 20, 25],
-          fov: 50,
-        }}
-        shadows
-      >
-        {/* Lighting */}
-        <ambientLight intensity={0.6} />
-        <directionalLight
-          position={[20, 20, 10]}
-          intensity={1}
-          castShadow
-          shadow-mapSize={[2048, 2048]}
-        />
-
-        {/* Scene */}
-        <Road />
-        <TrafficLight
-          position={[0, 0, 0]}
-          rotation={[0, 0, 0]}
-          northSouthColor={northSouthColor}
-          eastWestColor={eastWestColor}
-        />
-        <AnimatedVehicles />
-
-        {/* Ground */}
-        <Box args={[100, 0.1, 100]} position={[0, -0.1, 0]}>
-          <meshStandardMaterial color="#10b981" />
-        </Box>
-
-        {/* Direction Labels */}
-        <Text
-          position={[0, 1, 15]}
-          fontSize={2}
-          color="#374151"
-          anchorX="center"
-          anchorY="middle"
+      <Suspense fallback={<div className="flex items-center justify-center h-full text-lg">Loading 3D scene...</div>}>
+        <Canvas
+          camera={{
+            position: [25, 20, 25],
+            fov: 50,
+          }}
+          shadows
         >
-          NORTH
-        </Text>
-        <Text
-          position={[0, 1, -15]}
-          fontSize={2}
-          color="#374151"
-          anchorX="center"
-          anchorY="middle"
-        >
-          SOUTH
-        </Text>
-        <Text
-          position={[15, 1, 0]}
-          fontSize={2}
-          color="#374151"
-          anchorX="center"
-          anchorY="middle"
-          rotation={[0, -Math.PI / 2, 0]}
-        >
-          EAST
-        </Text>
-        <Text
-          position={[-15, 1, 0]}
-          fontSize={2}
-          color="#374151"
-          anchorX="center"
-          anchorY="middle"
-          rotation={[0, Math.PI / 2, 0]}
-        >
-          WEST
-        </Text>
+          {/* Lighting */}
+          <ambientLight intensity={0.6} />
+          <directionalLight
+            position={[20, 20, 10]}
+            intensity={1}
+            castShadow
+            shadow-mapSize={[2048, 2048]}
+          />
 
-        {/* Controls */}
-        <OrbitControls
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          maxPolarAngle={Math.PI / 2}
-          minDistance={10}
-          maxDistance={50}
-        />
-      </Canvas>
+          {/* Scene */}
+          <Road />
+          <TrafficLight
+            position={[0, 0, 0]}
+            rotation={[0, 0, 0]}
+            northSouthColor={northSouthColor}
+            eastWestColor={eastWestColor}
+          />
+          <SlowAnimatedVehicles />
+
+          {/* Ground */}
+          <Box args={[100, 0.1, 100]} position={[0, -0.1, 0]}>
+            <meshStandardMaterial color="#10b981" />
+          </Box>
+
+          {/* Direction Labels - Now using SafeText */}
+          <SafeText
+            position={[0, 1, 15]}
+            fontSize={2}
+            color="#374151"
+            anchorX="center"
+            anchorY="middle"
+          >
+            NORTH
+          </SafeText>
+          <SafeText
+            position={[0, 1, -15]}
+            fontSize={2}
+            color="#374151"
+            anchorX="center"
+            anchorY="middle"
+          >
+            SOUTH
+          </SafeText>
+          <SafeText
+            position={[15, 1, 0]}
+            fontSize={2}
+            color="#374151"
+            anchorX="center"
+            anchorY="middle"
+            rotation={[0, -Math.PI / 2, 0]}
+          >
+            EAST
+          </SafeText>
+          <SafeText
+            position={[-15, 1, 0]}
+            fontSize={2}
+            color="#374151"
+            anchorX="center"
+            anchorY="middle"
+            rotation={[0, Math.PI / 2, 0]}
+          >
+            WEST
+          </SafeText>
+
+          {/* Controls */}
+          <OrbitControls
+            enablePan={true}
+            enableZoom={true}
+            enableRotate={true}
+            maxPolarAngle={Math.PI / 2}
+            minDistance={10}
+            maxDistance={50}
+          />
+        </Canvas>
+      </Suspense>
     </div>
   );
 };

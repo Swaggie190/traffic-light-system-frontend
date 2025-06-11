@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import {
   BarChart3,
-  Dashboard,
+  LayoutDashboard,
   Play,
   Settings,
   Traffic,

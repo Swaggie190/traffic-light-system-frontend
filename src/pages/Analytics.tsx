@@ -33,7 +33,7 @@ export default function Analytics() {
             Export Data
           </Button>
           <Button>
-            <CompareIcon className="h-4 w-4 mr-2" />
+            <GitCompare className="h-4 w-4 mr-2" />
             Compare Simulations
           </Button>
         </div>

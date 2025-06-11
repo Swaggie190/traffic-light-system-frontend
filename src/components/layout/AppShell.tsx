@@ -145,9 +145,5 @@ const AppShellContent = ({ children }: { children: ReactNode }) => {
 };
 
 export const AppShell = ({ children }: AppShellProps) => {
-  return (
-    <Provider store={store}>
-      <AppShellContent>{children}</AppShellContent>
-    </Provider>
-  );
+  return <AppShellContent>{children}</AppShellContent>;
 };

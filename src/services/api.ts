@@ -23,13 +23,19 @@ import {
 } from "./mockData";
 
 const BASE_URL = "http://localhost:8080/api";
-const USE_MOCK_DATA = true; // Set to false when backend is available
+const USE_MOCK_DATA = false; // Set to false when backend is available
 
 class APIService {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
+    // If mock data is enabled, return mock data directly without making network requests
+    if (USE_MOCK_DATA) {
+      console.warn(`Using mock data for ${endpoint}`);
+      return this.getMockResponse<T>(endpoint);
+    }
+
     const url = `${BASE_URL}${endpoint}`;
     const config: RequestInit = {
       headers: {
@@ -40,25 +46,61 @@ class APIService {
     };
 
     try {
+      console.log(`Making API request to: ${url}`);
+      console.log(`Request method: ${config.method || "GET"}`);
+      console.log(`Request headers:`, config.headers);
+      if (config.body) {
+        console.log(`Request body:`, config.body);
+      }
+
       const response = await fetch(url, config);
-      const data = await response.json();
+
+      // Always try to parse the response
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse response as JSON:", parseError);
+        data = { message: "Invalid response format" };
+      }
+
+      console.log(`Response status: ${response.status}`);
+      console.log(`Response data:`, data);
 
       if (!response.ok) {
+        // Log detailed validation errors
+        console.error(`Backend validation error:`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorData: data,
+          url: url,
+          requestBody: config.body,
+        });
+
         throw new Error(
-          data.message || `HTTP error! status: ${response.status}`,
+          data.message ||
+            data.error ||
+            `HTTP error! status: ${response.status}`,
         );
       }
 
       return data;
     } catch (error) {
       console.error(`API request failed: ${endpoint}`, error);
+      console.error(`Full URL attempted: ${url}`);
+      console.error(`Request config:`, config);
 
-      // If backend is not available, return mock data for demo purposes
-      if (USE_MOCK_DATA) {
-        console.warn(`Using mock data for ${endpoint}`);
+      // Check if it's a network error vs server error
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        console.error("Network connection failed - backend may not be running");
+        // Fall back to mock data for network errors
+        console.warn(
+          `Backend not available, falling back to mock data for ${endpoint}`,
+        );
         return this.getMockResponse<T>(endpoint);
       }
 
+      // Re-throw server validation errors without fallback
       throw error;
     }
   }
@@ -102,18 +144,18 @@ class APIService {
     }
   }
 
-  private get<T>(endpoint: string): Promise<ApiResponse<T>> {
+  protected get<T>(endpoint: string): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: "GET" });
   }
 
-  private post<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
+  protected post<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
-  private delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+  protected delete<T>(endpoint: string): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: "DELETE" });
   }
 }

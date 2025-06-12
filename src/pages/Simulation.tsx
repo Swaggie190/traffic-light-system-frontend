@@ -26,6 +26,7 @@ import {
   Activity,
   Navigation,
 } from "lucide-react";
+import { WebSocketDebugger } from "../components/WebSocketDebugger";
 
 const LiveMetrics = () => {
   const simulation = useSelector(
@@ -369,6 +370,7 @@ export default function Simulation() {
 
       {/* Live Metrics */}
       <LiveMetrics />
+      <WebSocketDebugger />
     </div>
   );
 }
